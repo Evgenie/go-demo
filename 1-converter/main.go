@@ -22,7 +22,7 @@ func getParameters() (float64, string, string) {
 }
 
 func convertCurrency(amount float64, sourceCurrency string, targetCurrency string) float64 {
-
+	return 0.0
 }
 
 func main() {
