@@ -31,10 +31,7 @@ func getAmount() (float64, error) {
 	var amount float64
 	fmt.Printf("Введите сумму: ")
 	_, error := fmt.Scan(&amount)
-	if error != nil {
-		return -1, error
-	}
-	return amount, nil
+	return amount, error
 }
 
 func getParameters() (float64, string, string) {
@@ -54,7 +51,7 @@ func getParameters() (float64, string, string) {
 	amount, err := getAmount()
 	for amount <= 0 || err != nil {
 		fmt.Println("Ошибка. Повторите ввод")
-		getAmount()
+		amount, err = getAmount()
 	}
 	
 	return amount, sourceCurrency, targetCurrency
