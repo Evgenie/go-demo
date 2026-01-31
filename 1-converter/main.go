@@ -15,6 +15,21 @@ var eurToRub = usdToRub / usdToEur
 var rubToUsd = 1 / usdToRub
 var rubToEur = 1 / eurToRub
 
+var courses = map[string]map[string]float64{
+	"usd": {
+		"eur": usdToEur,
+		"rub": usdToRub,
+	},
+	"eur": {
+		"usd": eurToUsd,
+		"rub": eurToRub,
+	},
+	"rub": {
+		"usd": rubToUsd,
+		"eur": rubToEur,
+	},
+}
+
 func getSourceCurrency() string {
 	var sourceCurrency string
 	fmt.Printf("Введите исходную валюту(%s): ", currencies)
@@ -58,27 +73,8 @@ func getParameters() (float64, string, string) {
 }
 
 func convertCurrency(amount float64, sourceCurrency string, targetCurrency string) {
-	var converted float64
-	switch sourceCurrency {
-		case "usd":
-			if targetCurrency == "rub" {
-				converted = amount * usdToRub
-				} else {
-				converted = amount * usdToEur
-			}
-		case "eur":
-			if targetCurrency == "rub" {
-				converted = amount * eurToRub
-				} else {
-				converted = amount * eurToUsd
-			}
-		default:
-			if targetCurrency == "usd" {
-				converted = amount * rubToUsd
-			} else {
-				converted = amount * rubToEur
-			}
-	}
+	converted := amount * courses[sourceCurrency][targetCurrency]
+
 	fmt.Printf("Course %s to %s equals %.2f\n",sourceCurrency, targetCurrency,  converted)
 }
 
