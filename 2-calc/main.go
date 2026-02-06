@@ -43,32 +43,32 @@ func getNums() ([]float64, error) {
 	return numsSli, nil
 }
 
-func outputResult(operation string, numsSli []float64) {
-	numsLen := len(numsSli)
+func outputResult(operation string, numsSli *[]float64) {
+	numsLen := len(*numsSli)
 
 	switch operation {
 	case "AVG":
 		acc := 0.0
-		for _, n := range numsSli {
+		for _, n := range *numsSli {
 			acc += n
 		}
 		res := acc / float64(numsLen)
 		fmt.Printf("Среднее ваших чисел = %.2f\n", res)
 	case "SUM":
 		acc := 0.0
-		for _, n := range numsSli {
+		for _, n := range *numsSli {
 			acc += n
 		}
 		fmt.Printf("Сумма ваших чисел = %.2f\n", acc)
 	case "MED":
 		res := 0.0
-		slices.Sort(numsSli)
+		slices.Sort(*numsSli)
 		if numsLen%2 == 0 {
 			halfLen := numsLen / 2
-			res = (numsSli[halfLen-1] + numsSli[halfLen]) / 2
+			res = ((*numsSli)[halfLen-1] + (*numsSli)[halfLen]) / 2
 		} else {
 			halfLen := float64(numsLen) / 2
-			res = numsSli[int(halfLen)]
+			res = (*numsSli)[int(halfLen)]
 		}
 		fmt.Printf("Медиана ваших чисел = %.2f\n", res)
 	}
@@ -84,5 +84,5 @@ func main() {
 		numsSli, err = getNums()
 	}
 
-	outputResult(operation, numsSli)
+	outputResult(operation, &numsSli)
 }
