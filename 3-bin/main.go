@@ -30,5 +30,7 @@ func main() {
 		NewBin("3", true, time.Now(), "name3"),
 		NewBin("4", true, time.Now(), "name4"),
 	}
-	fmt.Println(binList)
+	for _, bin := range binList {
+		fmt.Printf("%+v\n",*bin)
+	}
 }
