@@ -6,16 +6,9 @@ import (
 	"strings"
 )
 
-const currencies = "usd/eur/rub"
-const usdToEur = 0.94
-const usdToRub = 80.0
-var currencyArr = strings.Split(currencies, "/")
-var eurToUsd = 1 / usdToEur
-var eurToRub = usdToRub / usdToEur
-var rubToUsd = 1 / usdToRub
-var rubToEur = 1 / eurToRub
+type Courses = map[string]map[string]float64
 
-func getSourceCurrency() string {
+func getSourceCurrency(currencies string) string {
 	var sourceCurrency string
 	fmt.Printf("Введите исходную валюту(%s): ", currencies)
 	fmt.Scan(&sourceCurrency)
@@ -35,13 +28,16 @@ func getAmount() (float64, error) {
 }
 
 func getParameters() (float64, string, string) {
-	sourceCurrency := getSourceCurrency()
+	const currencies = "usd/eur/rub"
+	currencyArr := strings.Split(currencies, "/")
+
+	sourceCurrency := getSourceCurrency(currencies)
 	for !slices.Contains(currencyArr, sourceCurrency) {
 		fmt.Println("Ошибка. Повторите ввод")
-		sourceCurrency = getSourceCurrency()
+		sourceCurrency = getSourceCurrency(currencies)
 	}
 	sourceCurrencyIdx := slices.Index(currencyArr, sourceCurrency)
-	suggestCurrencyArr := slices.Delete(currencyArr, sourceCurrencyIdx, sourceCurrencyIdx + 1)
+	suggestCurrencyArr := slices.Delete(currencyArr, sourceCurrencyIdx, sourceCurrencyIdx+1)
 	suggestCurrencies := strings.Join(suggestCurrencyArr, "/")
 	targetCurrency := getTargetCurrency(suggestCurrencies)
 	for !slices.Contains(suggestCurrencyArr, targetCurrency) {
@@ -53,36 +49,41 @@ func getParameters() (float64, string, string) {
 		fmt.Println("Ошибка. Повторите ввод")
 		amount, err = getAmount()
 	}
-	
+
 	return amount, sourceCurrency, targetCurrency
 }
 
-func convertCurrency(amount float64, sourceCurrency string, targetCurrency string) {
-	var converted float64
-	switch sourceCurrency {
-		case "usd":
-			if targetCurrency == "rub" {
-				converted = amount * usdToRub
-				} else {
-				converted = amount * usdToEur
-			}
-		case "eur":
-			if targetCurrency == "rub" {
-				converted = amount * eurToRub
-				} else {
-				converted = amount * eurToUsd
-			}
-		default:
-			if targetCurrency == "usd" {
-				converted = amount * rubToUsd
-			} else {
-				converted = amount * rubToEur
-			}
-	}
-	fmt.Printf("Course %s to %s equals %.2f\n",sourceCurrency, targetCurrency,  converted)
+func convertCurrency(courses *Courses) {
+	amount, sourceCurrency, targetCurrency := getParameters()
+	converted := amount * (*courses)[sourceCurrency][targetCurrency]
+
+	fmt.Printf("Course %s to %s equals %.2f\n", sourceCurrency, targetCurrency, converted)
 }
 
 func main() {
+	const usdToEur = 0.94
+	const usdToRub = 80.0
+
+	eurToUsd := 1 / usdToEur
+	eurToRub := usdToRub / usdToEur
+	rubToUsd := 1 / usdToRub
+	rubToEur := 1 / eurToRub
+
+	courses := Courses{
+		"usd": {
+			"eur": usdToEur,
+			"rub": usdToRub,
+		},
+		"eur": {
+			"usd": eurToUsd,
+			"rub": eurToRub,
+		},
+		"rub": {
+			"usd": rubToUsd,
+			"eur": rubToEur,
+		},
+	}
+
 	fmt.Println("__ Конвертер валюты __")
-	convertCurrency(getParameters())
+	convertCurrency(&courses)
 }
