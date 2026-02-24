@@ -4,7 +4,6 @@ import (
 	"demo/bins/bins"
 	"demo/bins/file"
 	"encoding/json"
-	"fmt"
 	"os"
 	"time"
 )
@@ -16,35 +15,23 @@ type Storage struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 }
 
-func (storage *Storage) SaveToFile() {
+func (storage *Storage) SaveToFile() error {
 	data, err := json.Marshal(storage)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
-	file, err := os.Create(fileName)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer file.Close()
-	_, err = file.Write(data)
-	if err != nil {
-		fmt.Println(err)
-	}
+	return os.WriteFile(fileName, data, os.ModePerm)
 }
 
-func ReadFromFile() *Storage {
+func ReadFromFile() (*Storage, error) {
 	file, err := file.ReadJson(fileName)
 	storage := Storage{}
 	if err != nil {
-		fmt.Println(err)
-		return &storage
+		return &storage, err
 	}
 	err = json.Unmarshal(*file, &storage)
 	if err != nil {
-		fmt.Println(err)
-		return &storage
+		return &storage, err
 	}
-	return &storage
+	return &storage, nil
 }
