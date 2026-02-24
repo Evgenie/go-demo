@@ -5,75 +5,72 @@ import (
 	"strings"
 )
 
-// **Описание**: Создайте структуру Document с полями Title (строка), Content (строка) и WordCount (число), затем реализуйте функцию, которая принимает указатель на Document и подсчитывает количество слов в поле Content, обновляя поле WordCount
+// **Описание**: Создайте программу для поиска аккаунтов по имени пользователя в структуре Vault
 //
-// **Входные данные**: Встроенные данные в коде (значения для инициализации структуры с заполненным Content и нулевым WordCount)
+// **Входные данные**: Готовая структура Vault с заполненным слайсом аккаунтов и строка для поиска
 //
-// **Выходные данные**: Вывод информации о документе до и после подсчета в формате "Title: [название], Content: [содержимое], WordCount: [количество]"
+// **Выходные данные**: Вывод в консоль найденных аккаунтов в формате "Found: username at url" или "No accounts found" если ничего не найдено
 //
 // **Ограничения**:
-// - Используйте только базовые типы данных Go
-// - Название должно быть непустой строкой
-// - Содержимое может быть любой строкой (включая пустую)
-// - Количество слов должно быть неотрицательным числом
-// - Слова разделяются пробелами
-// - Пустые строки и строки только из пробелов содержат 0 слов
+// - Используйте пакет strings для сравнения имен пользователей
+// - Поиск должен быть регистронезависимым
+// - Выводите результат через fmt.Printf
+// - Обработайте случай когда поисковая строка пустая
 //
 // **Примеры**:
-// Input: Title: "Report", Content: "Hello world from Go", WordCount: 0
+// Input: Vault с аккаунтами ["alice", "bob", "Alice123"], поиск "alice"
 // Output:
-// Before: Title: Report, Content: Hello world from Go, WordCount: 0
-// After: Title: Report, Content: Hello world from Go, WordCount: 4
+// Found: alice at example.com
+// Found: Alice123 at test.org
 //
-// Входные данные: Title: "Note", Content: "Programming is fun", WordCount: 0
-// Output:
-// Before: Title: Note, Content: Programming is fun, WordCount: 0
-// After: Title: Note, Content: Programming is fun, WordCount: 3
+// Входные данные: Vault с аккаунтами ["john", "mary"], поиск "peter"
+// Output: No accounts found
 
-type Document struct {
-	Title     string
-	Content   string
-	WordCount int
+type Account struct {
+	URL      string `json:"url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-func (document *Document) countContentWords() {
-	document.WordCount = len(strings.Fields(document.Content))
+func (account *Account) OutputAccount() {
+	fmt.Printf("Found: %s at %s\n", account.Username, account.URL)
 }
 
-func newDocument(title string, content string, wordCount int) (*Document, error) {
-	if title == "" {
-		return nil, fmt.Errorf("empty title")
+type Vault struct {
+	Accounts []Account `json:"accounts"`
+}
+
+func (vault *Vault) FindAccounts(username string) {
+	matched := false
+	if username != "" {
+		for _, account := range vault.Accounts {
+			if strings.Contains(strings.ToLower(account.Username), strings.ToLower(username)) {
+				account.OutputAccount()
+
+				if !matched {
+					matched = true
+				}
+			}
+		}
 	}
-	if wordCount < 0 {
-		return nil, fmt.Errorf("content should be non-negative")
+	if !matched {
+		fmt.Println("No accounts found")
 	}
-
-	return &Document{
-		Title:     title,
-		Content:   content,
-		WordCount: wordCount,
-	}, nil
-}
-
-func outputDocument(document *Document) string {
-	return fmt.Sprintf("Title: %s, Content: %s, WordCount: %d", document.Title, document.Content, document.WordCount)
-}
-
-func outputResult(title string, content string, wordCount int) {
-	document, err := newDocument(title, content, wordCount)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("Before:", outputDocument(document))
-	document.countContentWords()
-	fmt.Println("After:", outputDocument(document))
 }
 
 func main() {
-	// Ваша реализация
-	outputResult("Report", "Hello world from Go", 0)
-	outputResult("Note", "Programming is fun", 0)
-	outputResult("Note", "", 0)
-	outputResult("Note", "     ", 0)
+	// Готовые данные для тестирования
+	vault := Vault{
+		Accounts: []Account{
+			{URL: "github.com", Username: "alice", Password: "pass1"},
+			{URL: "gitlab.com", Username: "bob", Password: "pass2"},
+			{URL: "example.com", Username: "Alice123", Password: "pass3"},
+			{URL: "test.org", Username: "charlie", Password: "pass4"},
+		},
+	}
+
+	searchQuery := "alice"
+
+	// Ваш код здесь
+	vault.FindAccounts(searchQuery)
 }
