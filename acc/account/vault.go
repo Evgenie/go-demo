@@ -17,7 +17,8 @@ type Vault struct {
 }
 
 func InitVault() *Vault {
-	file, err := files.ReadFile(vaultFileName)
+	db := files.NewJsonDB(vaultFileName)
+	file, err := db.Read()
 	var vault Vault
 	if err != nil {
 		vault = Vault{
@@ -48,7 +49,8 @@ func (vault *Vault) WriteToJSON() {
 		return
 	}
 
-	files.WriteFile(bytes, vaultFileName)
+	db := files.NewJsonDB(vaultFileName)
+	db.Write(bytes)
 }
 
 func (vault *Vault) AddAccount(account *Account) {
