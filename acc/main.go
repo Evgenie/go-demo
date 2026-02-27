@@ -7,36 +7,44 @@ import (
 	"fmt"
 )
 
-var actions = map[string]int{
-	"create": 1,
-	"list":   2,
-	"find":   3,
-	"delete": 4,
-	"exit":   5,
+var actions = map[string]string{
+	"create": "1",
+	"list":   "2",
+	"find":   "3",
+	"delete": "4",
+	"exit":   "5",
 }
 
 const actionError = "Не удалось распознать действие, повторите ввод."
 
 var vault = account.InitVault(files.NewJsonDB("data.json"))
 
-func promptData(prompt string) string {
-	fmt.Print(prompt + ": ")
+func promptData[T any](data []T) string {
+	fmt.Println("")
+	lastIdx := len(data) - 1
+	for i, v := range data {
+		if i == lastIdx {
+			fmt.Printf("%v: ", v)
+		} else {
+			fmt.Println(v)
+		}
+	}
 	var res string
 	fmt.Scanln(&res)
 	return res
 }
 
 func getLogin() string {
-	return promptData("Введите логин")
+	return promptData([]string{"Введите логин"})
 }
 func getURL() string {
-	return promptData("Введите url")
+	return promptData([]string{"Введите url"})
 }
 
 func createAccount() {
 	myAccount, err := account.NewAccount(
 		getLogin(),
-		promptData("Введите пароль"),
+		promptData([]string{"Введите пароль"}),
 		getURL(),
 	)
 
@@ -66,27 +74,17 @@ func deleteAccount() {
 	vault.DeleteAccount(getURL())
 }
 
-func outputMenu() {
-	fmt.Println("Выберите действие:")
-	fmt.Println("1. Создать аккаунт")
-	fmt.Println("2. Показать список аккаунтов")
-	fmt.Println("3. Найти аккаунт")
-	fmt.Println("4. Удалить аккаунт")
-	fmt.Println("5. Выход")
-}
-
-func getAction() int {
-	var action int
-	outputMenu()
-	fmt.Scanln(&action)
-
-	return action
-}
-
 func manageAccounts() {
 Menu:
 	for {
-		switch getAction() {
+		switch promptData([]string{
+			"1. Создать аккаунт",
+			"2. Показать список аккаунтов",
+			"3. Найти аккаунт",
+			"4. Удалить аккаунт",
+			"5. Выход",
+			"Выберите действие",
+		}) {
 		case actions["create"]:
 			createAccount()
 			continue

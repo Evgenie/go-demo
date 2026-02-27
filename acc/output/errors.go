@@ -14,3 +14,7 @@ func PrintErrors(value any) {
 		color.Red("Неизвестный тип ошибки")
 	}
 }
+
+func sun[T int | int16 | int32 | float32 | float64](a, b T) T {
+	return a + b
+}
