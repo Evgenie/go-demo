@@ -1,7 +1,7 @@
 package files
 
 import (
-	"fmt"
+	"demo/account/output"
 	"os"
 )
 
@@ -19,7 +19,7 @@ func (db *JsonDB) Write(content []byte) {
 	file, err := os.Create(db.fileName)
 
 	if err != nil {
-		fmt.Println(err)
+		output.PrintErrors(err)
 	}
 
 	defer file.Close()
@@ -27,7 +27,7 @@ func (db *JsonDB) Write(content []byte) {
 	_, err = file.Write(content)
 
 	if err != nil {
-		fmt.Println(err)
+		output.PrintErrors(err)
 		return
 	}
 }

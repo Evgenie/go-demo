@@ -3,9 +3,8 @@ package main
 import (
 	"demo/account/account"
 	"demo/account/files"
+	"demo/account/output"
 	"fmt"
-
-	"github.com/fatih/color"
 )
 
 var actions = map[string]int{
@@ -42,7 +41,7 @@ func createAccount() {
 	)
 
 	if err != nil {
-		fmt.Println(err)
+		output.PrintErrors(err)
 		return
 	}
 	vault.AddAccount(myAccount)
@@ -55,7 +54,7 @@ func findAccounts() {
 	accounts := vault.FindAccountsByURL(getURL())
 
 	if len(*accounts) == 0 {
-		color.Red("Аккаунтов не найдено")
+		output.PrintErrors("Аккаунтов не найдено")
 		return
 	}
 

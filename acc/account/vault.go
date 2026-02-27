@@ -1,7 +1,7 @@
 package account
 
 import (
-	"demo/account/files"
+	"demo/account/output"
 	"encoding/json"
 	"strings"
 	"time"
@@ -9,7 +9,16 @@ import (
 	"github.com/fatih/color"
 )
 
-const vaultFileName = "data.json"
+type ByteReader interface {
+	Read() ([]byte, error)
+}
+type ByteWriter interface {
+	Write([]byte)
+}
+type Db interface {
+	ByteReader
+	ByteWriter
+}
 
 type Vault struct {
 	Accounts  []Account `json:"accounts"`
@@ -18,26 +27,26 @@ type Vault struct {
 
 type VaultWithDb struct {
 	Vault
-	db files.JsonDB
+	db Db
 }
 
-func InitVault(db *files.JsonDB) *VaultWithDb {
+func InitVault(db Db) *VaultWithDb {
 	file, err := db.Read()
 	vault := VaultWithDb{
 		Vault: Vault{
 			Accounts:  []Account{},
 			UpdatedAt: time.Now(),
 		},
-		db: *db,
+		db: db,
 	}
 	if err != nil {
-		color.Red("Ошибка чтения файла, создан новый")
+		output.PrintErrors("Ошибка чтения файла, создан новый")
 		vault.WriteToJSON()
 		return &vault
 	}
 	err = json.Unmarshal(file, &vault.Vault)
 	if err != nil {
-		color.Red("Ошибка чтения файла, создан новый")
+		output.PrintErrors("Ошибка чтения файла, создан новый")
 		vault.WriteToJSON()
 		return &vault
 	}
@@ -48,7 +57,7 @@ func (vault *VaultWithDb) WriteToJSON() {
 	bytes, err := vault.ToBytes()
 
 	if err != nil {
-		color.Red(err.Error())
+		output.PrintErrors(err.Error())
 		return
 	}
 
@@ -72,7 +81,7 @@ func (vault *VaultWithDb) DeleteAccount(url string) {
 			return
 		}
 	}
-	color.HiRed("Аккаунт не найден")
+	output.PrintErrors("Аккаунт не найден")
 }
 
 func (vault *Vault) OutputAccountList() {
@@ -89,7 +98,7 @@ func (vault *Vault) OutputAccount(login string) {
 			return
 		}
 	}
-	color.HiRed("Аккаунт не найден")
+	output.PrintErrors("Аккаунт не найден")
 }
 
 func (vault *Vault) ToBytes() ([]byte, error) {
