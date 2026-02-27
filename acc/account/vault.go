@@ -16,32 +16,35 @@ type Vault struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func InitVault() *Vault {
-	db := files.NewJsonDB(vaultFileName)
+type VaultWithDb struct {
+	Vault
+	db files.JsonDB
+}
+
+func InitVault(db *files.JsonDB) *VaultWithDb {
 	file, err := db.Read()
-	var vault Vault
-	if err != nil {
-		vault = Vault{
+	vault := VaultWithDb{
+		Vault: Vault{
 			Accounts:  []Account{},
 			UpdatedAt: time.Now(),
-		}
+		},
+		db: *db,
+	}
+	if err != nil {
+		color.Red("Ошибка чтения файла, создан новый")
 		vault.WriteToJSON()
 		return &vault
 	}
-	err = json.Unmarshal(file, &vault)
+	err = json.Unmarshal(file, &vault.Vault)
 	if err != nil {
 		color.Red("Ошибка чтения файла, создан новый")
-		vault = Vault{
-			Accounts:  []Account{},
-			UpdatedAt: time.Now(),
-		}
 		vault.WriteToJSON()
 		return &vault
 	}
 	return &vault
 }
 
-func (vault *Vault) WriteToJSON() {
+func (vault *VaultWithDb) WriteToJSON() {
 	bytes, err := vault.ToBytes()
 
 	if err != nil {
@@ -49,18 +52,17 @@ func (vault *Vault) WriteToJSON() {
 		return
 	}
 
-	db := files.NewJsonDB(vaultFileName)
-	db.Write(bytes)
+	vault.db.Write(bytes)
 }
 
-func (vault *Vault) AddAccount(account *Account) {
+func (vault *VaultWithDb) AddAccount(account *Account) {
 	vault.Accounts = append(vault.Accounts, *account)
 	vault.UpdatedAt = time.Now()
 
 	vault.WriteToJSON()
 }
 
-func (vault *Vault) DeleteAccount(url string) {
+func (vault *VaultWithDb) DeleteAccount(url string) {
 	for i, acc := range vault.Accounts {
 		if acc.Url == url {
 			vault.Accounts = append(vault.Accounts[:i], vault.Accounts[i+1:]...)

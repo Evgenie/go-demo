@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo/account/account"
+	"demo/account/files"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -17,7 +18,7 @@ var actions = map[string]int{
 
 const actionError = "Не удалось распознать действие, повторите ввод."
 
-var vault = account.InitVault()
+var vault = account.InitVault(files.NewJsonDB("data.json"))
 
 func promptData(prompt string) string {
 	fmt.Print(prompt + ": ")
