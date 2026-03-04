@@ -5,6 +5,7 @@ import (
 	"demo/account/files"
 	"demo/account/output"
 	"fmt"
+	"strings"
 )
 
 var mapFunc = map[string]func(){
@@ -13,8 +14,6 @@ var mapFunc = map[string]func(){
 	"3": findAccounts,
 	"4": deleteAccount,
 }
-
-const actionError = "Не удалось распознать действие, повторите ввод."
 
 var vault = account.InitVault(files.NewJsonDB("data.json"))
 
@@ -58,7 +57,10 @@ func outputAccountList() {
 	vault.OutputAccountList()
 }
 func findAccounts() {
-	accounts := vault.FindAccountsByURL(getURL())
+	requiredUrl := getURL()
+	accounts := vault.FindAccounts(func(a *account.Account) bool {
+		return strings.Contains(a.Url, requiredUrl)
+	})
 
 	if len(*accounts) == 0 {
 		output.PrintErrors("Аккаунтов не найдено")

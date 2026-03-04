@@ -3,7 +3,6 @@ package account
 import (
 	"demo/account/output"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -110,10 +109,10 @@ func (vault *Vault) ToBytes() ([]byte, error) {
 	return file, nil
 }
 
-func (vault *Vault) FindAccountsByURL(url string) *[]*Account {
+func (vault *Vault) FindAccounts(checker func(*Account) bool) *[]*Account {
 	var targetAccounts []*Account
 	for _, acc := range vault.Accounts {
-		if strings.Contains(acc.Url, url) {
+		if checker(&acc) {
 			targetAccounts = append(targetAccounts, &acc)
 		}
 	}
