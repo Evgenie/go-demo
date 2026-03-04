@@ -20,7 +20,7 @@ var mapFunc = map[string]func(*account.VaultWithDb){
 	"5": deleteAccount,
 }
 
-func promptData[T any](data []T) string {
+func promptData(data ...string) string {
 	fmt.Println("")
 	lastIdx := len(data) - 1
 	for i, v := range data {
@@ -36,16 +36,16 @@ func promptData[T any](data []T) string {
 }
 
 func getLogin() string {
-	return promptData([]string{"Введите логин"})
+	return promptData("Введите логин")
 }
 func getURL() string {
-	return promptData([]string{"Введите url"})
+	return promptData("Введите url")
 }
 
 func createAccount(vault *account.VaultWithDb) {
 	myAccount, err := account.NewAccount(
 		getLogin(),
-		promptData([]string{"Введите пароль"}),
+		promptData("Введите пароль"),
 		getURL(),
 	)
 
@@ -81,7 +81,7 @@ func manageAccounts() {
 	vault := account.InitVault(files.NewJsonDB("data.json"))
 Menu:
 	for {
-		action := promptData([]string{
+		action := promptData(
 			"1. Создать аккаунт",
 			"2. Показать список аккаунтов",
 			"3. Найти аккаунт по URL",
@@ -89,7 +89,7 @@ Menu:
 			"5. Удалить аккаунт",
 			"6. Выход",
 			"Выберите действие",
-		})
+		)
 
 		actionFunc := mapFunc[action]
 		if actionFunc == nil {
