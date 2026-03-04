@@ -11,8 +11,12 @@ import (
 var mapFunc = map[string]func(){
 	"1": createAccount,
 	"2": outputAccountList,
-	"3": findAccounts("URL"),
-	"4": findAccounts("login"),
+	"3": getFindAccounts(getURL, func(a *account.Account, url string) bool {
+		return strings.Contains(a.Url, url)
+	}),
+	"4": getFindAccounts(getLogin, func(a *account.Account, login string) bool {
+		return strings.Contains(a.Login, login)
+	}),
 	"5": deleteAccount,
 }
 
@@ -57,28 +61,9 @@ func createAccount() {
 func outputAccountList() {
 	vault.OutputAccountList()
 }
-func findAccounts(findBy string) func() {
-	var value string
-	var checker func(a *account.Account, s string) bool
-
+func getFindAccounts(getValue func() string, checker func(a *account.Account, s string) bool) func() {
 	return func() {
-		switch findBy {
-		case "URL":
-			value = getURL()
-			checker = func(a *account.Account, s string) bool {
-				return strings.Contains(a.Url, s)
-			}
-		case "login":
-			value = getLogin()
-			checker = func(a *account.Account, s string) bool {
-				return strings.Contains(a.Login, s)
-			}
-		}
-		if value == "" || checker == nil {
-			output.PrintErrors("Аккаунтов не найдено")
-			return
-		}
-		accounts := vault.FindAccounts(value, checker)
+		accounts := vault.FindAccounts(getValue(), checker)
 
 		if len(*accounts) == 0 {
 			output.PrintErrors("Аккаунтов не найдено")
