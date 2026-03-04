@@ -109,10 +109,10 @@ func (vault *Vault) ToBytes() ([]byte, error) {
 	return file, nil
 }
 
-func (vault *Vault) FindAccounts(checker func(*Account) bool) *[]*Account {
+func (vault *Vault) FindAccounts(value string, checker func(*Account, string) bool) *[]*Account {
 	var targetAccounts []*Account
 	for _, acc := range vault.Accounts {
-		if checker(&acc) {
+		if checker(&acc, value) {
 			targetAccounts = append(targetAccounts, &acc)
 		}
 	}
