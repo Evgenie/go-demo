@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var mapFunc = map[string]func(){
+var mapFunc = map[string]func(*account.VaultWithDb){
 	"1": createAccount,
 	"2": outputAccountList,
 	"3": getFindAccounts(getURL, func(a *account.Account, url string) bool {
@@ -19,8 +19,6 @@ var mapFunc = map[string]func(){
 	}),
 	"5": deleteAccount,
 }
-
-var vault = account.InitVault(files.NewJsonDB("data.json"))
 
 func promptData[T any](data []T) string {
 	fmt.Println("")
@@ -44,7 +42,7 @@ func getURL() string {
 	return promptData([]string{"Введите url"})
 }
 
-func createAccount() {
+func createAccount(vault *account.VaultWithDb) {
 	myAccount, err := account.NewAccount(
 		getLogin(),
 		promptData([]string{"Введите пароль"}),
@@ -58,11 +56,11 @@ func createAccount() {
 	vault.AddAccount(myAccount)
 }
 
-func outputAccountList() {
+func outputAccountList(vault *account.VaultWithDb) {
 	vault.OutputAccountList()
 }
-func getFindAccounts(getValue func() string, checker func(a *account.Account, s string) bool) func() {
-	return func() {
+func getFindAccounts(getValue func() string, checker func(a *account.Account, s string) bool) func(vault *account.VaultWithDb) {
+	return func(vault *account.VaultWithDb) {
 		accounts := vault.FindAccounts(getValue(), checker)
 
 		if len(*accounts) == 0 {
@@ -75,11 +73,12 @@ func getFindAccounts(getValue func() string, checker func(a *account.Account, s 
 		}
 	}
 }
-func deleteAccount() {
+func deleteAccount(vault *account.VaultWithDb) {
 	vault.DeleteAccount(getURL())
 }
 
 func manageAccounts() {
+	vault := account.InitVault(files.NewJsonDB("data.json"))
 Menu:
 	for {
 		action := promptData([]string{
@@ -96,7 +95,7 @@ Menu:
 		if actionFunc == nil {
 			break Menu
 		}
-		actionFunc()
+		actionFunc(vault)
 	}
 }
 
