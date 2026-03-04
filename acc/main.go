@@ -7,12 +7,11 @@ import (
 	"fmt"
 )
 
-var actions = map[string]string{
-	"create": "1",
-	"list":   "2",
-	"find":   "3",
-	"delete": "4",
-	"exit":   "5",
+var mapFunc = map[string]func(){
+	"1": createAccount,
+	"2": outputAccountList,
+	"3": findAccounts,
+	"4": deleteAccount,
 }
 
 const actionError = "Не удалось распознать действие, повторите ввод."
@@ -77,33 +76,20 @@ func deleteAccount() {
 func manageAccounts() {
 Menu:
 	for {
-		switch promptData([]string{
+		action := promptData([]string{
 			"1. Создать аккаунт",
 			"2. Показать список аккаунтов",
 			"3. Найти аккаунт",
 			"4. Удалить аккаунт",
 			"5. Выход",
 			"Выберите действие",
-		}) {
-		case actions["create"]:
-			createAccount()
-			continue
-		case actions["list"]:
-			outputAccountList()
-			continue
-		case actions["find"]:
-			findAccounts()
-			continue
-		case actions["delete"]:
-			deleteAccount()
-			continue
-		case actions["exit"]:
-			break Menu
+		})
 
-		default:
-			fmt.Println(actionError)
-			continue
+		actionFunc := mapFunc[action]
+		if actionFunc == nil {
+			break Menu
 		}
+		actionFunc()
 	}
 }
 
