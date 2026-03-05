@@ -10,7 +10,7 @@ import (
 
 var operationsMap = map[string]func(*[]float64){
 	"AVG": outputAvg,
-	"SUM": outputMed,
+	"SUM": outputSum,
 	"MED": outputMed,
 }
 
