@@ -2,10 +2,13 @@ package main
 
 import (
 	"demo/account/account"
+	"demo/account/encrypter"
 	"demo/account/files"
 	"demo/account/output"
 	"fmt"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 var mapFunc = map[string]func(*account.VaultWithDb){
@@ -78,7 +81,7 @@ func deleteAccount(vault *account.VaultWithDb) {
 }
 
 func manageAccounts() {
-	vault := account.InitVault(files.NewJsonDB("data.json"))
+	vault := account.InitVault(files.NewJsonDB("data.vault"), *encrypter.NewEncrypter())
 Menu:
 	for {
 		action := promptData(
@@ -100,6 +103,10 @@ Menu:
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		output.PrintErrors("Не удалось найти env файл")
+	}
 	fmt.Println("__ Менеджер акаунтов __")
 	manageAccounts()
 }

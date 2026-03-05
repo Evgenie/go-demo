@@ -1,12 +1,16 @@
 package account
 
 import (
+	"demo/account/encrypter"
 	"demo/account/output"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/fatih/color"
 )
+
+type Encrypter = encrypter.Encrypter
 
 type ByteReader interface {
 	Read() ([]byte, error)
@@ -26,33 +30,33 @@ type Vault struct {
 
 type VaultWithDb struct {
 	Vault
-	db Db
+	db  Db
+	enc Encrypter
 }
 
-func InitVault(db Db) *VaultWithDb {
-	file, err := db.Read()
-	vault := VaultWithDb{
+func InitVault(db Db, enc Encrypter) *VaultWithDb {
+	encryptedFile, err := db.Read()
+	vault := &VaultWithDb{
 		Vault: Vault{
 			Accounts:  []Account{},
 			UpdatedAt: time.Now(),
 		},
-		db: db,
+		db:  db,
+		enc: enc,
 	}
-	if err != nil {
-		output.PrintErrors("Ошибка чтения файла, создан новый")
-		vault.WriteToJSON()
-		return &vault
+	if err == nil {
+		err = json.Unmarshal(vault.enc.Decrypt(encryptedFile), &vault.Vault)
+		if err == nil {
+			fmt.Println("Количество аккаунтов", len(vault.Accounts))
+			return vault
+		}
 	}
-	err = json.Unmarshal(file, &vault.Vault)
-	if err != nil {
-		output.PrintErrors("Ошибка чтения файла, создан новый")
-		vault.WriteToJSON()
-		return &vault
-	}
-	return &vault
+	output.PrintErrors("Ошибка чтения файла, создан новый")
+	vault.WriteToFile()
+	return vault
 }
 
-func (vault *VaultWithDb) WriteToJSON() {
+func (vault *VaultWithDb) WriteToFile() {
 	bytes, err := vault.ToBytes()
 
 	if err != nil {
@@ -60,14 +64,14 @@ func (vault *VaultWithDb) WriteToJSON() {
 		return
 	}
 
-	vault.db.Write(bytes)
+	vault.db.Write(vault.enc.Encrypt(bytes))
 }
 
 func (vault *VaultWithDb) AddAccount(account *Account) {
 	vault.Accounts = append(vault.Accounts, *account)
 	vault.UpdatedAt = time.Now()
 
-	vault.WriteToJSON()
+	vault.WriteToFile()
 }
 
 func (vault *VaultWithDb) DeleteAccount(url string) {
@@ -75,7 +79,7 @@ func (vault *VaultWithDb) DeleteAccount(url string) {
 		if acc.Url == url {
 			vault.Accounts = append(vault.Accounts[:i], vault.Accounts[i+1:]...)
 			vault.UpdatedAt = time.Now()
-			vault.WriteToJSON()
+			vault.WriteToFile()
 			color.HiGreen("Аккаунт успешно удален")
 			return
 		}
