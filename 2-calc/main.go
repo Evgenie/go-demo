@@ -2,15 +2,47 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
 )
 
-var operations = []string{
-	"AVG",
-	"SUM",
-	"MED",
+var operationsMap = map[string]func(*[]float64){
+	"AVG": outputAvg,
+	"SUM": outputMed,
+	"MED": outputMed,
+}
+
+var operations = slices.Collect(maps.Keys(operationsMap))
+
+func outputAvg(numsSli *[]float64) {
+	acc := 0.0
+	for _, n := range *numsSli {
+		acc += n
+	}
+	res := acc / float64(len(*numsSli))
+	fmt.Printf("Среднее ваших чисел = %.2f\n", res)
+}
+func outputSum(numsSli *[]float64) {
+	acc := 0.0
+	for _, n := range *numsSli {
+		acc += n
+	}
+	fmt.Printf("Сумма ваших чисел = %.2f\n", acc)
+}
+func outputMed(numsSli *[]float64) {
+	res := 0.0
+	slices.Sort(*numsSli)
+	numsLen := len(*numsSli)
+	if numsLen%2 == 0 {
+		halfLen := numsLen / 2
+		res = ((*numsSli)[halfLen-1] + (*numsSli)[halfLen]) / 2
+	} else {
+		halfLen := float64(numsLen) / 2
+		res = (*numsSli)[int(halfLen)]
+	}
+	fmt.Printf("Медиана ваших чисел = %.2f\n", res)
 }
 
 var operationsStr = strings.Join(operations, "/")
@@ -44,33 +76,9 @@ func getNums() ([]float64, error) {
 }
 
 func outputResult(operation string, numsSli *[]float64) {
-	numsLen := len(*numsSli)
-
-	switch operation {
-	case "AVG":
-		acc := 0.0
-		for _, n := range *numsSli {
-			acc += n
-		}
-		res := acc / float64(numsLen)
-		fmt.Printf("Среднее ваших чисел = %.2f\n", res)
-	case "SUM":
-		acc := 0.0
-		for _, n := range *numsSli {
-			acc += n
-		}
-		fmt.Printf("Сумма ваших чисел = %.2f\n", acc)
-	case "MED":
-		res := 0.0
-		slices.Sort(*numsSli)
-		if numsLen%2 == 0 {
-			halfLen := numsLen / 2
-			res = ((*numsSli)[halfLen-1] + (*numsSli)[halfLen]) / 2
-		} else {
-			halfLen := float64(numsLen) / 2
-			res = (*numsSli)[int(halfLen)]
-		}
-		fmt.Printf("Медиана ваших чисел = %.2f\n", res)
+	action := operationsMap[operation]
+	if action != nil {
+		action(numsSli)
 	}
 }
 
