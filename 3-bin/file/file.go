@@ -1,18 +1,36 @@
 package file
 
 import (
-	"errors"
 	"os"
-	"strings"
 )
 
-func ReadJson(name string) (*[]byte, error) {
-	if !strings.HasSuffix(name, ".json") {
-		return nil, errors.New("Extension should be JSON")
+type JsonDB struct {
+	fileName string
+}
+
+func NewJsonDB(name string) *JsonDB {
+	return &JsonDB{
+		fileName: name,
 	}
-	data, err := os.ReadFile(name)
+}
+
+func (db *JsonDB) Write(content []byte) error {
+	file, err := os.Create(db.fileName)
+
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &data, nil
+
+	defer file.Close()
+
+	_, err = file.Write(content)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *JsonDB) Read() ([]byte, error) {
+	return os.ReadFile(db.fileName)
 }

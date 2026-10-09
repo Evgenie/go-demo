@@ -2,24 +2,28 @@ package main
 
 import (
 	"demo/account/account"
+	"demo/account/encrypter"
 	"demo/account/files"
 	"demo/account/output"
 	"fmt"
+	"strings"
+
+	"github.com/joho/godotenv"
 )
 
-var actions = map[string]string{
-	"create": "1",
-	"list":   "2",
-	"find":   "3",
-	"delete": "4",
-	"exit":   "5",
+var mapFunc = map[string]func(*account.VaultWithDb){
+	"1": createAccount,
+	"2": outputAccountList,
+	"3": getFindAccounts(getURL, func(a *account.Account, url string) bool {
+		return strings.Contains(a.Url, url)
+	}),
+	"4": getFindAccounts(getLogin, func(a *account.Account, login string) bool {
+		return strings.Contains(a.Login, login)
+	}),
+	"5": deleteAccount,
 }
 
-const actionError = "Не удалось распознать действие, повторите ввод."
-
-var vault = account.InitVault(files.NewJsonDB("data.json"))
-
-func promptData[T any](data []T) string {
+func promptData(data ...string) string {
 	fmt.Println("")
 	lastIdx := len(data) - 1
 	for i, v := range data {
@@ -35,16 +39,16 @@ func promptData[T any](data []T) string {
 }
 
 func getLogin() string {
-	return promptData([]string{"Введите логин"})
+	return promptData("Введите логин")
 }
 func getURL() string {
-	return promptData([]string{"Введите url"})
+	return promptData("Введите url")
 }
 
-func createAccount() {
+func createAccount(vault *account.VaultWithDb) {
 	myAccount, err := account.NewAccount(
 		getLogin(),
-		promptData([]string{"Введите пароль"}),
+		promptData("Введите пароль"),
 		getURL(),
 	)
 
@@ -55,59 +59,54 @@ func createAccount() {
 	vault.AddAccount(myAccount)
 }
 
-func outputAccountList() {
+func outputAccountList(vault *account.VaultWithDb) {
 	vault.OutputAccountList()
 }
-func findAccounts() {
-	accounts := vault.FindAccountsByURL(getURL())
+func getFindAccounts(getValue func() string, checker func(a *account.Account, s string) bool) func(vault *account.VaultWithDb) {
+	return func(vault *account.VaultWithDb) {
+		accounts := vault.FindAccounts(getValue(), checker)
 
-	if len(*accounts) == 0 {
-		output.PrintErrors("Аккаунтов не найдено")
-		return
-	}
+		if len(*accounts) == 0 {
+			output.PrintErrors("Аккаунтов не найдено")
+			return
+		}
 
-	for _, acc := range *accounts {
-		acc.Output()
+		for _, acc := range *accounts {
+			acc.Output()
+		}
 	}
 }
-func deleteAccount() {
+func deleteAccount(vault *account.VaultWithDb) {
 	vault.DeleteAccount(getURL())
 }
 
 func manageAccounts() {
+	vault := account.InitVault(files.NewJsonDB("data.vault"), *encrypter.NewEncrypter())
 Menu:
 	for {
-		switch promptData([]string{
+		action := promptData(
 			"1. Создать аккаунт",
 			"2. Показать список аккаунтов",
-			"3. Найти аккаунт",
-			"4. Удалить аккаунт",
-			"5. Выход",
+			"3. Найти аккаунт по URL",
+			"4. Найти аккаунт по логину",
+			"5. Удалить аккаунт",
+			"6. Выход",
 			"Выберите действие",
-		}) {
-		case actions["create"]:
-			createAccount()
-			continue
-		case actions["list"]:
-			outputAccountList()
-			continue
-		case actions["find"]:
-			findAccounts()
-			continue
-		case actions["delete"]:
-			deleteAccount()
-			continue
-		case actions["exit"]:
-			break Menu
+		)
 
-		default:
-			fmt.Println(actionError)
-			continue
+		actionFunc := mapFunc[action]
+		if actionFunc == nil {
+			break Menu
 		}
+		actionFunc(vault)
 	}
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		output.PrintErrors("Не удалось найти env файл")
+	}
 	fmt.Println("__ Менеджер акаунтов __")
 	manageAccounts()
 }

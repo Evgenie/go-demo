@@ -1,46 +1,63 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"errors"
 	"fmt"
-	"strings"
 )
 
-// **Описание**: Создайте интерфейс Processor с методом Process([]byte) []byte и реализуйте тип UpperCaseProcessor, который преобразует все буквы в верхний регистр
+// **Описание**: Реализуйте функцию для расшифровки зашифрованных данных с использованием AES-GCM
 //
-// **Входные данные**: Встроенные тестовые данные: []byte("hello world"), []byte("go programming"), []byte("test data")
+// **Входные данные**: Зашифрованные данные в виде []byte (встроенные в код как переменная)
 //
-// **Выходные данные**: Результаты преобразования для каждого набора данных через интерфейс Processor
+// **Выходные данные**: Расшифрованные данные в виде []byte или ошибка при неудачной расшифровке
 //
-// **Ограничения**:
-// - Используйте только стандартные возможности Go
-// - Processor должен содержать только метод Process([]byte) []byte
-// - UpperCaseProcessor должен преобразовывать все ASCII буквы в верхний регистр
-// - Демонстрируйте работу через переменную типа Processor
-// - Выводите исходные и преобразованные данные в консоль
+// **Ограничения**: Используйте только стандартные пакеты Go (crypto/aes, crypto/cipher, errors)
 //
 // **Примеры**:
-// Input: []byte("hello world")
-// Output: []byte("HELLO WORLD")
+// Input: []byte{...зашифрованные данные с nonce в начале...}
+// Output: []byte("Hello, World!")
 //
-// Входные данные: []byte("go programming")
-// Output: []byte("GO PROGRAMMING")
+// Input: []byte{...другие зашифрованные данные...}
+// Output: []byte("Secret message")
 
-// Ваш код здесь
-type Processor interface {
-	Process([]byte) []byte
+type Encrypter struct {
+	key []byte
 }
 
-type UpperCaseProcessor struct{}
-
-func (UpperCaseProcessor) Process(data []byte) []byte {
-	return []byte(strings.ToUpper(string(data)))
+func (e *Encrypter) Decrypt(data []byte) ([]byte, error) {
+	// Ваш код здесь
+	if len(data) == 0 {
+		return nil, errors.New("Should be encrypted data")
+	}
+	block, err := aes.NewCipher(e.key)
+	if err != nil {
+		return nil, err
+	}
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	nonceSize := aesGCM.NonceSize()
+	nonce, cipherText := data[:nonceSize], data[nonceSize:]
+	plainText, err := aesGCM.Open(nil, nonce, cipherText, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plainText, nil
 }
 
 func main() {
-	// Ваш код здесь
-	var upperCaseProcessor Processor = &UpperCaseProcessor{}
-	fmt.Printf("%s\n", upperCaseProcessor.Process([]byte("hello world")))
-	fmt.Printf("%s\n", upperCaseProcessor.Process([]byte("go programming")))
-	fmt.Printf("%s\n", upperCaseProcessor.Process([]byte("test data")))
-}
+	// Пример зашифрованных данных для тестирования
+	encryptedData := []byte{ /* здесь будут зашифрованные данные */ }
 
+	encrypter := &Encrypter{key: []byte("your-32-byte-key-here-for-aes256")}
+	// Ваш код здесь
+	decrypted, err := encrypter.Decrypt(encryptedData)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Расшифрованные данные:", string(decrypted))
+}

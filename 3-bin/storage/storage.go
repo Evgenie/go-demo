@@ -2,36 +2,72 @@ package storage
 
 import (
 	"demo/bins/bins"
-	"demo/bins/file"
 	"encoding/json"
-	"os"
+	"fmt"
 	"time"
 )
 
-const fileName = "storage.json"
+type Db interface {
+	Read() ([]byte, error)
+	Write([]byte) error
+}
 
 type Storage struct {
 	Bins      []bins.Bin `json:"bins"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
-func (storage *Storage) SaveToFile() error {
-	data, err := json.Marshal(storage)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(fileName, data, os.ModePerm)
+type StorageWithDb struct {
+	Storage
+	db Db
 }
 
-func ReadFromFile() (*Storage, error) {
-	file, err := file.ReadJson(fileName)
-	storage := Storage{}
-	if err != nil {
-		return &storage, err
+func InitStorage(db Db) *StorageWithDb {
+	file, err := db.Read()
+	storage := StorageWithDb{
+		Storage: Storage{
+			Bins:      []bins.Bin{},
+			UpdatedAt: time.Now(),
+		},
+		db: db,
 	}
-	err = json.Unmarshal(*file, &storage)
 	if err != nil {
-		return &storage, err
+		fmt.Println("Ошибка чтения файла, создан новый")
+		storage.WriteToJSON()
+		return &storage
 	}
-	return &storage, nil
+	err = json.Unmarshal(file, &storage.Storage)
+	if err != nil {
+		fmt.Println("Ошибка чтения файла, создан новый")
+		storage.WriteToJSON()
+		return &storage
+	}
+	return &storage
+}
+
+func (storage *StorageWithDb) WriteToJSON() {
+	bytes, err := storage.ToBytes()
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	storage.db.Write(bytes)
+}
+
+func (storage *StorageWithDb) AddBin(bin *bins.Bin) {
+	storage.Bins = append(storage.Bins, *bin)
+	storage.UpdatedAt = time.Now()
+
+	storage.WriteToJSON()
+}
+
+func (storage *Storage) ToBytes() ([]byte, error) {
+	file, err := json.Marshal(storage)
+
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
